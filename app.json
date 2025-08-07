@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "pockettrainer",
+    "slug": "pockettrainer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/PocketTrainerIcon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/PocketTrainerSplash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.christopherflores.pockettrainer"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.christopherflores.pockettrainer"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
