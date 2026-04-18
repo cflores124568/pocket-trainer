@@ -12,11 +12,19 @@ type FoodSearchProps = {
   onSelectFood: (food: FoodItem) => void;
   selectedAllergens: string[];
   customAllergens: string[];
+  sourceScreen?: 'CreateNutritionPlan' | 'EditNutritionPlan';
+  planId?: string;
 };
 
 type NavigationProp = StackNavigationProp<NutritionStackParamList, 'FoodDetailsScreen'>;
 
-const FoodSearch = ({ onSelectFood, selectedAllergens, customAllergens }: FoodSearchProps) => {
+const FoodSearch = ({
+  onSelectFood,
+  selectedAllergens,
+  customAllergens,
+  sourceScreen = 'CreateNutritionPlan',
+  planId,
+}: FoodSearchProps) => {
   const navigation = useNavigation<NavigationProp>();
   const { searchFood, getNutrients } = useNutritionPlan();
   const [query, setQuery] = useState('');
@@ -62,6 +70,8 @@ const FoodSearch = ({ onSelectFood, selectedAllergens, customAllergens }: FoodSe
               const detailedFood = await getNutrients(food.name, SEARCH_PLAN_ID);
               navigation.navigate('FoodDetailsScreen', {
                 food: { ...detailedFood, photo: food.photo },
+                sourceScreen,
+                planId,
               });
             },
           },
@@ -71,6 +81,8 @@ const FoodSearch = ({ onSelectFood, selectedAllergens, customAllergens }: FoodSe
       const detailedFood = await getNutrients(food.name, SEARCH_PLAN_ID);
       navigation.navigate('FoodDetailsScreen', {
         food: { ...detailedFood, photo: food.photo },
+        sourceScreen,
+        planId,
       });
     }
   };

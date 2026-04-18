@@ -23,6 +23,9 @@ import Checkbox from 'expo-checkbox';
 
 type NavigationProp = StackNavigationProp<NutritionStackParamList, 'ViewNutritionPlan'>;
 
+const getFoodTrackingId = (food: ScheduledFoodItem, index: number): string =>
+  food.entryId || `${food.id}-${food.day}-${food.mealTime || 'any'}-${index}`;
+
 const ViewNutritionPlansScreen = ({ navigation }: { navigation: NavigationProp }) => {
   const { nutritionPlans, deletePlan, loading, setActivePlan } = useNutritionPlan();
   const { userData } = useAuth();
@@ -53,7 +56,10 @@ const ViewNutritionPlansScreen = ({ navigation }: { navigation: NavigationProp }
         for (const plan of nutritionPlans) {
           const consumption = await getConsumptionForPlan(plan.id!);
           if ((!consumption || !consumption.foods) && plan.foods.length > 0) {
-            const initialFoods = plan.foods.map((food) => ({ id: food.id!, consumed: false }));
+            const initialFoods = plan.foods.map((food, index) => ({
+              id: getFoodTrackingId(food, index),
+              consumed: false,
+            }));
             await Promise.all(
               initialFoods.map((food) => saveConsumption(plan.id!, food.id, false))
             );
@@ -111,24 +117,25 @@ const ViewNutritionPlansScreen = ({ navigation }: { navigation: NavigationProp }
     }));
   };
 
-  const renderFood = ({ item }: { item: ScheduledFoodItem }) => {
+  const renderFood = ({ item, index }: { item: ScheduledFoodItem; index: number }) => {
     const planId = item.planId;
     if (!planId) {
     console.warn('Missing planId for food item:', item);
     return null;
   }
+    const trackingId = getFoodTrackingId(item, index);
     const consumption = consumptionMap[planId] || [];
-    const isConsumed = consumption.find((food) => food.id === item.id)?.consumed || false;
+    const isConsumed = consumption.find((food) => food.id === trackingId)?.consumed || false;
 
     const handleCheck = async () => {
-      setSaving((prev) => ({ ...prev, [planId]: item.id }));
+      setSaving((prev) => ({ ...prev, [planId]: trackingId }));
       try {
-        await saveConsumption(planId, item.id!, !isConsumed);
+        await saveConsumption(planId, trackingId, !isConsumed);
         setConsumptionMap((prev) => ({
           ...prev,
-          [planId]: (prev[planId] || []).map((food) =>
-            food.id === item.id ? { ...food, consumed: !isConsumed } : food
-          ),
+          [planId]: (prev[planId] || []).map((food) => (
+            food.id === trackingId ? { ...food, consumed: !isConsumed } : food
+          )),
         }));
       } catch (error: any) {
         Alert.alert(
@@ -145,7 +152,7 @@ const ViewNutritionPlansScreen = ({ navigation }: { navigation: NavigationProp }
     return (
       <View style={localStyles.foodItem}>
         <View style={localStyles.checkboxContainer}>
-          {saving[planId] === item.id ? (
+          {saving[planId] === trackingId ? (
             <ActivityIndicator size="small" color={theme.colors.primary} />
           ) : (
             <Checkbox
@@ -207,7 +214,7 @@ const ViewNutritionPlansScreen = ({ navigation }: { navigation: NavigationProp }
           <View style={localStyles.foodList}>
             <FlatList
               data={item.foods}
-              keyExtractor={(food, index) => food.id || `${food.name}-${index}`}
+              keyExtractor={(food, index) => getFoodTrackingId(food, index)}
               renderItem={renderFood}
               ListEmptyComponent={<Text style={localStyles.emptyText}>No foods added</Text>}
             />

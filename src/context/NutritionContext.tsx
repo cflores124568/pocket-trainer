@@ -9,6 +9,9 @@ import { NUTRITIONIX_SUPPORTED_ALLERGENS } from '../utils/AllergenSelectorUtil';
 
 const NutritionContext = createContext<NutritionContextType | undefined>(undefined);
 
+const createScheduledFoodEntryId = (foodId: string, index: number): string =>
+  `${foodId}-${Date.now()}-${index}-${Math.floor(Math.random() * 100000)}`;
+
 export const NutritionPlanProvider = ({ children }: { children: ReactNode }) => {
   const [planName, setPlanName] = useState('');
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>('maintain');
@@ -250,7 +253,28 @@ export const NutritionPlanProvider = ({ children }: { children: ReactNode }) => 
   const savePlan = useCallback(async (plan: NutritionPlan) => {
     if (!user) return;
     try {
-      // First, save the plan to Firestore to get the generated planId
+      if (plan.id) {
+        const planId = plan.id;
+        const updatedFoods = plan.foods.map((food, index) => ({
+          ...food,
+          planId,
+          entryId: food.entryId || createScheduledFoodEntryId(food.id, index),
+        }));
+
+        await updateDoc(doc(firestore, 'nutritionPlans', planId), {
+          ...plan,
+          id: planId,
+          userId: user.uid,
+          foods: updatedFoods,
+          dailyCalorieTarget: plan.dailyCalorieTarget ?? dailyCalorieTarget,
+          macroRatios: plan.macroRatios ?? macroRatios,
+          userStats: plan.userStats ?? userStats,
+          updatedAt: new Date(),
+        });
+        return;
+      }
+
+      // Save the new plan first to get a generated plan id.
       const docRef = await addDoc(collection(firestore, 'nutritionPlans'), {
         ...plan,
         userId: user.uid,
@@ -258,17 +282,16 @@ export const NutritionPlanProvider = ({ children }: { children: ReactNode }) => 
         dailyCalorieTarget,
         macroRatios,
         userStats,
-        foods: [], // Temporarily empty to avoid overwriting
+        foods: [],
       });
       const planId = docRef.id;
 
-      // Add planId to each food item
-      const updatedFoods = plan.foods.map((food) => ({
+      const updatedFoods = plan.foods.map((food, index) => ({
         ...food,
         planId,
+        entryId: food.entryId || createScheduledFoodEntryId(food.id, index),
       }));
 
-      // Update the document with the planId and foods
       await updateDoc(doc(firestore, 'nutritionPlans', planId), {
         id: planId,
         foods: updatedFoods,

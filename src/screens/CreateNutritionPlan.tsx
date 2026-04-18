@@ -37,6 +37,8 @@ const CreateNutritionPlanScreen = ({ navigation, route }: CreateNutritionPlanPro
     const id = uuid.v4() as string | number[];
     return typeof id === 'string' ? id: id.join('');
   });
+  const createFoodEntryId = (foodId: string) =>
+    `${foodId}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 
   //States for user stats and UI controls
   const [useDefaultStats, setUseDefaultStats] = useState<boolean>(true);
@@ -149,6 +151,7 @@ const CreateNutritionPlanScreen = ({ navigation, route }: CreateNutritionPlanPro
     }
     const newFood: ScheduledFoodItem = {
       ...selectedFoodState,
+      entryId: createFoodEntryId(selectedFoodState.id),
       day: selectedModalDay,
       mealTime: selectedMealTime,
       servings: servingsNum,
@@ -177,8 +180,8 @@ const CreateNutritionPlanScreen = ({ navigation, route }: CreateNutritionPlanPro
     return age >= 13 && age <= 120;
   };
 
-  const handleRemoveFood = (foodId: string) => {
-    setSelectedFoods(selectedFoods.filter((f) => f.id !== foodId));
+  const handleRemoveFood = (entryId: string) => {
+    setSelectedFoods(selectedFoods.filter((f) => (f.entryId || f.id) !== entryId));
   };
   //Handle cancellation with confirmation
   const handleCancel = (navigate?: () => void) => {
@@ -570,6 +573,7 @@ const CreateNutritionPlanScreen = ({ navigation, route }: CreateNutritionPlanPro
               onSelectFood={handleAddFood}
               selectedAllergens={selectedAllergens}
               customAllergens={customAllergens}
+              sourceScreen="CreateNutritionPlan"
             />
           </View>
         );
@@ -619,7 +623,7 @@ const CreateNutritionPlanScreen = ({ navigation, route }: CreateNutritionPlanPro
                   return (
                     <View style={localStyles.foodsContainer}>
                       {dayFoods.map((item) => (
-                        <View key={item.id} style={localStyles.foodItem}>
+                        <View key={item.entryId || item.id} style={localStyles.foodItem}>
                           <View style={localStyles.foodDetails}>
                             {item.photo && (
                               <Image
@@ -635,7 +639,7 @@ const CreateNutritionPlanScreen = ({ navigation, route }: CreateNutritionPlanPro
                             </View>
                           </View>
                           <Pressable
-                            onPress={() => handleRemoveFood(item.id)}
+                            onPress={() => handleRemoveFood(item.entryId || item.id)}
                             style={localStyles.removeButton}
                           >
                             <Text style={localStyles.removeText}>✕</Text>

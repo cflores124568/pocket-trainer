@@ -17,7 +17,7 @@ type FoodDetailsScreenProps = {
 };
 
 const FoodDetailsScreen = ({ navigation, route }: FoodDetailsScreenProps) => {
-  const { food } = route.params;
+  const { food, sourceScreen = 'CreateNutritionPlan', planId } = route.params;
   const [showMacronutrients, setShowMacronutrients] = useState(true);
   const [showMicronutrients, setShowMicronutrients] = useState(false);
   const [showServingSizes, setShowServingSizes] = useState(false);
@@ -71,6 +71,14 @@ const FoodDetailsScreen = ({ navigation, route }: FoodDetailsScreenProps) => {
       vitaminC: scaleNutrient(food.vitaminC, food.servingWeight || 0),
     };
     console.log('Navigating with scaled food:', scaledFood);
+    if(sourceScreen === 'EditNutritionPlan' && planId){
+      navigation.navigate('EditNutritionPlan', {
+        planId,
+        selectedFood: scaledFood,
+      });
+      return;
+    }
+
     navigation.navigate('CreateNutritionPlan', {
       selectedFood: scaledFood,
     });
@@ -195,7 +203,7 @@ const FoodDetailsScreen = ({ navigation, route }: FoodDetailsScreenProps) => {
             {food.ingredients && food.ingredients.length > 0 ? (
               food.ingredients.map((ingredient, index) => (
                 <Text key={index} style={localStyles.nutritionText}>
-                  • ${ingredient}
+                  • {ingredient}
                 </Text>
               ))
             ) : (

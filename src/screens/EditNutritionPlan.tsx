@@ -18,13 +18,21 @@ type EditNutritionPlanProps = {
 
 const EditNutritionPlanScreen = ({ route, navigation }: EditNutritionPlanProps) => {
   const { nutritionPlans, savePlan, loading } = useNutritionPlan();
-  const { planId } = route.params;
+  const { planId, selectedFood: routeSelectedFood } = route.params;
+
+  const createFoodEntryId = (foodId: string) =>
+    `${foodId}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  const withEntryIds = (planFoods: ScheduledFoodItem[]) =>
+    planFoods.map((food, index) => ({
+      ...food,
+      entryId: food.entryId || `legacy-${food.id}-${food.day}-${food.mealTime || 'any'}-${index}`,
+    }));
 
   // Find the plan to edit
   const planToEdit = nutritionPlans.find((p) => p.id === planId);
   const [name, setName] = useState(planToEdit?.name || '');
   const [goal, setGoal] = useState<'lose' | 'maintain' | 'gain'>(planToEdit?.goal || 'maintain');
-  const [foods, setFoods] = useState<ScheduledFoodItem[]>(planToEdit?.foods || []);
+  const [foods, setFoods] = useState<ScheduledFoodItem[]>(withEntryIds(planToEdit?.foods || []));
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(0);
@@ -37,17 +45,26 @@ const EditNutritionPlanScreen = ({ route, navigation }: EditNutritionPlanProps) 
     }
   }, [planToEdit, navigation]);
 
+  useEffect(() => {
+    if (!planToEdit) return;
+    setName(planToEdit.name);
+    setGoal(planToEdit.goal);
+    setFoods(withEntryIds(planToEdit.foods));
+  }, [planToEdit]);
+
   const handleAddFood = (food: FoodItem) => {
-    if (foods.some((existingFood) => existingFood.id === food.id)) {
-      Alert.alert('Duplicate', `${food.name} is already in your plan!`);
-      return;
-    }
     setSelectedFood(food);
     setSelectedDay(0);
     setSelectedMealTime('snack');
     setServings('1');
     setModalVisible(true);
   };
+
+  useEffect(() => {
+    if (!routeSelectedFood) return;
+    handleAddFood(routeSelectedFood);
+    navigation.setParams({ selectedFood: undefined });
+  }, [routeSelectedFood, navigation]);
 
   const confirmAddFood = () => {
     if (!selectedFood) return;
@@ -58,6 +75,7 @@ const EditNutritionPlanScreen = ({ route, navigation }: EditNutritionPlanProps) 
     }
     const scheduledFood: ScheduledFoodItem = {
       ...selectedFood,
+      entryId: createFoodEntryId(selectedFood.id),
       day: selectedDay,
       mealTime: selectedMealTime,
       servings: servingsNum,
@@ -69,8 +87,8 @@ const EditNutritionPlanScreen = ({ route, navigation }: EditNutritionPlanProps) 
     setServings('1');
   };
 
-  const handleRemoveFood = (foodId: string) => {
-    setFoods(foods.filter((f) => f.id !== foodId));
+  const handleRemoveFood = (entryId: string) => {
+    setFoods(foods.filter((f) => (f.entryId || f.id) !== entryId));
   };
 
   const handleSave = async () => {
@@ -137,7 +155,8 @@ const EditNutritionPlanScreen = ({ route, navigation }: EditNutritionPlanProps) 
         <FoodSearch onSelectFood={handleAddFood} 
           selectedAllergens={planToEdit?.allergies || []}
           customAllergens={planToEdit?.customAllergens || []}
-        
+          sourceScreen="EditNutritionPlan"
+          planId={planId}
         />
       </View>
 
@@ -146,11 +165,11 @@ const EditNutritionPlanScreen = ({ route, navigation }: EditNutritionPlanProps) 
         <Text style={styles.sectionTitle}>Selected Foods</Text>
         {foods.length > 0 ? (
           foods.map((food) => (
-            <View key={food.id} style={localStyles.foodItem}>
+            <View key={food.entryId || food.id} style={localStyles.foodItem}>
               <Text>
                 {food.name} - {food.calories} cal (P: {food.protein}g, C: {food.carbs}g, F: {food.fat}g) - Day: {DAYS_OF_WEEK[food.day]}, Meal: {food.mealTime || 'None'}, Servings: {food.servings}
               </Text>
-              <Pressable onPress={() => handleRemoveFood(food.id)}>
+              <Pressable onPress={() => handleRemoveFood(food.entryId || food.id)}>
                 <Text style={localStyles.removeText}>Remove</Text>
               </Pressable>
             </View>

@@ -13,6 +13,9 @@ import { useNavigation } from '@react-navigation/native';
 
 type CompleteNutritionPlanRouteProp = RouteProp<NutritionStackParamList, 'CompleteNutritionPlan'>;
 
+const getFoodTrackingId = (food: ScheduledFoodItem, index: number): string =>
+  food.entryId || `${food.id}-${food.day}-${food.mealTime || 'any'}-${index}`;
+
 // ProgressStats component (inspired by WorkoutStats)
 const ProgressStats = ({ consumedCount, totalCount }: { consumedCount: number; totalCount: number }) => {
   const progressPercentage = totalCount > 0 ? (consumedCount / totalCount) * 100 : 0;
@@ -53,8 +56,8 @@ const CompleteNutritionPlanScreen = ({ route }: { route: CompleteNutritionPlanRo
     setPlan(targetPlan);
     if (targetPlan) {
       // Initialize consumption states
-      const initialConsumption = targetPlan.foods.reduce((acc, food) => {
-        acc[food.id] = false;
+      const initialConsumption = targetPlan.foods.reduce((acc, food, index) => {
+        acc[getFoodTrackingId(food, index)] = false;
         return acc;
       }, {} as Record<string, boolean>);
       setConsumedFoods(initialConsumption);
@@ -64,8 +67,8 @@ const CompleteNutritionPlanScreen = ({ route }: { route: CompleteNutritionPlanRo
 
   const getTotalMacros = (foods: ScheduledFoodItem[]) => {
     return foods.reduce(
-      (totals, food) => {
-        if (consumedFoods[food.id]) {
+      (totals, food, index) => {
+        if (consumedFoods[getFoodTrackingId(food, index)]) {
           totals.calories += (food.calories || 0) * food.servings;
           totals.protein += (food.protein || 0) * food.servings;
           totals.carbs += (food.carbs || 0) * food.servings;
@@ -86,7 +89,7 @@ const CompleteNutritionPlanScreen = ({ route }: { route: CompleteNutritionPlanRo
 
   const handleCompleteAll = () => {
     const newConsumed = Object.fromEntries(
-      plan!.foods.map((food) => [food.id, true])
+      plan!.foods.map((food, index) => [getFoodTrackingId(food, index), true])
     );
     setConsumedFoods(newConsumed);
   };
@@ -94,7 +97,7 @@ const CompleteNutritionPlanScreen = ({ route }: { route: CompleteNutritionPlanRo
   const handleComplete = async () => {
     if (!user || !plan) return;
 
-    const selectedFoods = plan.foods.filter((food) => consumedFoods[food.id]);
+    const selectedFoods = plan.foods.filter((food, index) => consumedFoods[getFoodTrackingId(food, index)]);
     if (selectedFoods.length === 0) {
       Alert.alert('No Foods Consumed', 'Please mark at least one food as consumed.');
       return;
@@ -180,21 +183,24 @@ const CompleteNutritionPlanScreen = ({ route }: { route: CompleteNutritionPlanRo
 
       <FlatList
         data={plan.foods}
-        keyExtractor={(item, index) => item.id || `${item.name}-${index}`}
-        renderItem={({ item }) => (
+        keyExtractor={(item, index) => getFoodTrackingId(item, index)}
+        renderItem={({ item, index }) => {
+          const trackingId = getFoodTrackingId(item, index);
+          return (
           <View style={localStyles.foodItem}>
             <View style={localStyles.foodDetails}>
               <Text>{item.name}</Text>
               <Text>{item.servings} servings - {(item.calories * item.servings).toFixed(1)} cal</Text>
             </View>
             <Switch
-              value={consumedFoods[item.id] || false}
-              onValueChange={() => toggleFoodConsumption(item.id)}
+              value={consumedFoods[trackingId] || false}
+              onValueChange={() => toggleFoodConsumption(trackingId)}
               trackColor={{ false: '#767577', true: theme.colors.primary }}
-              thumbColor={consumedFoods[item.id] ? '#f4f3f4' : '#f4f3f4'}
+              thumbColor={consumedFoods[trackingId] ? '#f4f3f4' : '#f4f3f4'}
             />
           </View>
-        )}
+          );
+        }}
       />
 
       <View style={localStyles.bottomContainer}>

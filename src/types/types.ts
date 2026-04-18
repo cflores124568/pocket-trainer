@@ -54,8 +54,12 @@ export type WorkoutStackParamList = {
 export type NutritionStackParamList = {
   ViewNutritionPlan: undefined;
   CreateNutritionPlan: { gender?: Gender; weight?: number; selectedFood?: FoodItem};
-  EditNutritionPlan: { planId: string };
-  FoodDetailsScreen: { food: FoodItem;};
+  EditNutritionPlan: { planId: string; selectedFood?: FoodItem };
+  FoodDetailsScreen: {
+    food: FoodItem;
+    sourceScreen?: 'CreateNutritionPlan' | 'EditNutritionPlan';
+    planId?: string;
+  };
   CompleteNutritionPlan: { planId: string };
 };
 
@@ -281,6 +285,7 @@ export type NutritionContextType = {
 export type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type ScheduledFoodItem = FoodItem & {
+  entryId?: string;
   day: DayOfWeek;
   mealTime?: MealTime;
   servings: number;
