@@ -188,7 +188,7 @@ const MuscleDiagramScreen = ({ navigation, route }: MuscleDiagramScreenProps) =>
         <Pressable
           style={({ pressed }) => [
             styles.button,
-            mode === 'plan' ? styles.buttonActive : styles.buttonInactive,
+            mode === 'explore' ? styles.buttonActive : styles.buttonInactive,
             { marginBottom: theme.spacing.sm },
             pressed && { opacity: 0.7 },
           ]}
@@ -197,7 +197,7 @@ const MuscleDiagramScreen = ({ navigation, route }: MuscleDiagramScreenProps) =>
           <Text style={styles.buttonText}>Explore (Single Muscle)</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [styles.button, mode === 'explore' ? styles.buttonActive : styles.buttonInactive, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.button, mode === 'plan' ? styles.buttonActive : styles.buttonInactive, pressed && { opacity: 0.7 }]}
           onPress={handlePlanMode}
         >
           <Text style={styles.buttonText}>Plan Workout (Multi-Muscle)</Text>

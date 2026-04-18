@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../types/types';
@@ -47,10 +48,9 @@ const WelcomeScreen = ({ navigation }: WelcomeScreenProps) => {
               }
             ]}
           >
-            <Image
-              source={require('/Users/chrisflores/Documents/NewPocketTrainer/assets/PocketTrainerIcon.png')}
-              style={styles.logo}
-            />
+            <View style={styles.logoContainer}>
+              <Ionicons name="fitness" size={72} color="white" />
+            </View>
             <Text style={styles.appTitle}>PocketTrainer</Text>
             <Text style={styles.tagline}>Your personal fitness journey starts here</Text>
           </Animated.View>
@@ -107,11 +107,16 @@ const styles = StyleSheet.create({
     marginTop: 60,
     width: '100%',
   },
-  logo: {
+  logoContainer: {
     width: 150,
     height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     marginBottom: 20,
-    resizeMode: 'contain',
   },
   appTitle: {
     fontSize: 32,
