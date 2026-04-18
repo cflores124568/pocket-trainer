@@ -38,11 +38,16 @@ const ViewWorkoutPlansScreen = ({ navigation }: ViewWorkoutPlansProps) => {
     const fetchCompletionStatus = async () => {
       const today = new Date().toISOString().split('T')[0];
       const status: {[key: string]: { completed: boolean; partial: boolean; completedExercises: string[]; totalExercises: number }} = {};
+      const getWorkoutSortTime = (date: string, createdAt: any) => {
+        if (createdAt?.toDate) return createdAt.toDate().getTime();
+        return new Date(date).getTime();
+      };
       
       for(const plan of workoutPlans){
-        // Get today's completed workouts for this user
-        const completedWorkouts = await getCompletedWorkoutsForDate(user.uid, today);
-        const planWorkout = completedWorkouts.find((w) => w.planName === plan.name);
+        const workoutsForToday = await getCompletedWorkoutsForDate(user.uid, today);
+        const latestPlanWorkout = workoutsForToday
+          .filter((w) => w.planName === plan.name)
+          .sort((a, b) => getWorkoutSortTime(b.date, b.createdAt) - getWorkoutSortTime(a.date, a.createdAt))[0];
         
         // Calculate total exercises across all days in this plan
         const totalExercises = plan.dailySchedules.reduce(
@@ -51,9 +56,9 @@ const ViewWorkoutPlansScreen = ({ navigation }: ViewWorkoutPlansProps) => {
         );
         
         status[plan.id] = {
-          completed: !!planWorkout?.completed, // Fully finished today
-          partial: !!planWorkout && !planWorkout.completed, // Started but not finished
-          completedExercises: planWorkout?.completedExercises || [],
+          completed: !!latestPlanWorkout?.completed, // Fully finished today
+          partial: !!latestPlanWorkout && !latestPlanWorkout.completed, // Started but not finished
+          completedExercises: latestPlanWorkout?.completedExercises || [],
           totalExercises,
         };
       }
@@ -224,7 +229,10 @@ const ViewWorkoutPlansScreen = ({ navigation }: ViewWorkoutPlansProps) => {
         <Text style={globalStyles.label}>Please sign in to view workout plans.</Text>
         <Pressable
           style={globalStyles.button}
-          onPress={() => navigation.navigate('SignIn' as any)}
+          onPress={() => {
+            const rootNavigation = navigation.getParent()?.getParent() as any;
+            rootNavigation?.navigate('Auth', { screen: 'Login' });
+          }}
           accessibilityLabel="Sign in"
         >
           <Text style={globalStyles.buttonText}>Sign In</Text>

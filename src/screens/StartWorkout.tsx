@@ -146,12 +146,12 @@ const StartWorkoutScreen = ({ route, navigation }: StartWorkoutProps) => {
   const [completedExercises, setCompletedExercises] = useState<{ [exerciseId: string]: boolean }>({});
   const [timers, setTimers] = useState<{ [exerciseId: string]: { timeLeft: number; isRunning: boolean } }>({});
   const [isWorkoutPaused, setIsWorkoutPaused] = useState(false);
-  const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
   const [workoutDuration, setWorkoutDuration] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
   const timerRefs = useRef<{ [exerciseId: string]: NodeJS.Timeout }>({});
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const workoutStartTimeRef = useRef<Date | null>(null);
   const insets = useSafeAreaInsets();
   const sound = useRef<Audio.Sound | null>(null);
 
@@ -183,6 +183,23 @@ const StartWorkoutScreen = ({ route, navigation }: StartWorkoutProps) => {
       setIsSaving(false);
     }
   }, [user, planName, workoutDuration, completedExercises, caloriesBurned, saveCompletedWorkout]);
+
+  const startDurationTimer = useCallback((startTime?: Date) => {
+    const effectiveStartTime = startTime || workoutStartTimeRef.current || new Date();
+    workoutStartTimeRef.current = effectiveStartTime;
+
+    if(durationTimerRef.current){
+      clearInterval(durationTimerRef.current);
+    }
+    durationTimerRef.current = setInterval(() => {
+      const currentStart = workoutStartTimeRef.current;
+      if(currentStart){
+        const seconds = Math.floor((Date.now() - currentStart.getTime()) / 1000);
+        setWorkoutDuration(seconds);
+      }
+    }, 1000);
+  }, []);
+
   //Load workout plan and initialize state
   useEffect(() => {
     const loadWorkout = async () => {
@@ -217,10 +234,18 @@ const StartWorkoutScreen = ({ route, navigation }: StartWorkoutProps) => {
         else{
           //Check for existing partial progress
           const today = new Date().toISOString().split('T')[0];
+          const getWorkoutSortTime = (date: string, createdAt: any) => {
+            if(createdAt?.toDate){
+              return createdAt.toDate().getTime();
+            }
+            return new Date(date).getTime();
+          };
           const completedWorkouts = await getCompletedWorkoutsForDate(user!.uid, today);
-          const planWorkout = completedWorkouts.find((w) => w.planName === planName && !w.completed);
-          if(planWorkout?.completedExercises?.length){
-            planWorkout.completedExercises.forEach((exerciseId) => {
+          const latestPlanWorkout = completedWorkouts
+            .filter((w) => w.planName === planName)
+            .sort((a, b) => getWorkoutSortTime(b.date, b.createdAt) - getWorkoutSortTime(a.date, a.createdAt))[0];
+          if(latestPlanWorkout && !latestPlanWorkout.completed && latestPlanWorkout.completedExercises?.length){
+            latestPlanWorkout.completedExercises.forEach((exerciseId) => {
               initialCompletion[exerciseId] = true;
             });
             setIsResuming(true);
@@ -232,8 +257,8 @@ const StartWorkoutScreen = ({ route, navigation }: StartWorkoutProps) => {
           return acc;
         }, {} as { [key: string]: { timeLeft: number; isRunning: boolean } });
         setTimers(initialTimers);
-        setWorkoutStartTime(new Date());
-        startDurationTimer();
+        const initialStartTime = new Date();
+        startDurationTimer(initialStartTime);
       } 
       else{
         Alert.alert('Error', `Workout plan "${planName}" not found.`);
@@ -243,20 +268,8 @@ const StartWorkoutScreen = ({ route, navigation }: StartWorkoutProps) => {
     if(user){
       loadWorkout();
     }
-  }, [planName, workoutPlans, loading, user, initialCompletedExercises]);
-  //Start duration timer for tracking workout time
-  const startDurationTimer = () => {
-    if(durationTimerRef.current){
-      clearInterval(durationTimerRef.current);
-    }
-    durationTimerRef.current = setInterval(() => {
-      if(workoutStartTime){
-        const now = new Date();
-        const seconds = Math.floor((now.getTime() - workoutStartTime.getTime()) / 1000);
-        setWorkoutDuration(seconds);
-      }
-    }, 1000);
-  };
+  }, [planName, workoutPlans, loading, user, initialCompletedExercises, getCompletedWorkoutsForDate, startDurationTimer]);
+  
   //Format duration in MM:SS
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);

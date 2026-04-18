@@ -64,12 +64,11 @@ export const WorkoutHistoryProvider = ({ children }: { children: ReactNode }) =>
   };
 
   const getCompletedWorkoutsForDate = (userId: string, date: string): CompletedWorkout[] => {
-    // Filter workouts for the given user and date (YYYY-MM-DD)
+    // Return all workouts for the given user/date so callers can decide resume/completed state.
     return workoutHistory.filter(
       (workout) =>
         workout.userId === userId &&
-        workout.date.startsWith(date) &&
-        workout.completed
+        workout.date.startsWith(date)
     );
   };
 
