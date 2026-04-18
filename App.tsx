@@ -30,7 +30,6 @@ import { WorkoutPlanProvider } from './src/context/WorkoutPlanContext';
 import { NutritionPlanProvider } from './src/context/NutritionContext';
 import { Ionicons, FontAwesome6 } from '@expo/vector-icons';
 import { ActivityIndicator, StyleSheet } from 'react-native';
-import 'react-native-reanimated';
 import 'react-native-gesture-handler';
 import WorkoutHistoryScreen from './src/screens/WorkoutHistoryScreen';
 import TermsOfServiceScreen from './src/screens/TermsOfService';
