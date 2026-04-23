@@ -4,11 +4,11 @@
     "slug": "pockettrainer",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/app-icon.png",
+    "icon": "./assets/PocketTrainerIcon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/CreateWorkoutPlan.png",
+      "image": "./assets/PocketTrainerSplash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,13 +21,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/app-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.christopherflores.pockettrainer"
     },
     "web": {
-      "favicon": "./assets/app-icon.png"
+      "favicon": "./assets/favicon.png"
     }
   }
 }
